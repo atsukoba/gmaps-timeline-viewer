@@ -23,11 +23,32 @@ pip install -r requirments.txt
 create database from Takeout data
 
 ```shell
+createdb gmap_demo_app
+psql gmap_demo_app < setup.sql
+```
+
+check database info
+
+```shell
+% psql gmap_demo_app
+psql (14.4)
+Type "help" for help.
+
+gmap_demo_app=#  \conninfo
+```
+
+and copy  `env.json.sample` into `env.json` then set attributes, then run
+
+```shell
 python db.py
 ```
 
-then run Streamlit server
+and run Streamlit server
 
 ```shell
-python run.py 127.0.0.1 8080
+streamlit run run.py
 ```
+
+## Notes
+
+- this demo app is assignment on MMKB class at Keio University SFC grad school of media and governance
