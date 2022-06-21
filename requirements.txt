@@ -1,0 +1,6 @@
+glob2
+streamlit
+sqlalchemy
+numpy
+pandas
+tqdm
