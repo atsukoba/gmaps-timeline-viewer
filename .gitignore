@@ -1,3 +1,5 @@
+*.log
+env.json
 notes/
 *.json
 .DS_Store
