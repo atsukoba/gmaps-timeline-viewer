@@ -1,6 +1,8 @@
 glob2
 streamlit
 sqlalchemy
+psycopg2
 numpy
 pandas
 tqdm
+pydeck
