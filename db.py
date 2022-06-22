@@ -13,12 +13,14 @@ from sqlalchemy import (ARRAY, TIMESTAMP, Column, Float, ForeignKey, Integer,
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, scoped_session, sessionmaker
 from sqlalchemy.sql import text
+from sqlalchemy.sql.elements import TextClause
 from tqdm import tqdm
 
-from utils import create_logger, env
+from utils import create_logger, env, TimeStamp, Coordinate
 
 logger = create_logger("db")
 
+# build db connection
 connection_config = {
     "user": env["DATABASE_USER"],
     "password": env["DATABASE_PASSWORD"],
@@ -37,14 +39,31 @@ else:
             **connection_config), echo=True)
 
 
-class SearchQueries:
-    hoge = text("SELECT * FROM User WHERE age >= :age_min AND age <= :age_max")
+class Search:
+    """ build queries from spatio-temporal info """
 
+    view_center: Coordinate = (35.0, 135.0)  # latitude / longitude
+    radius: float = 30.0  # km
 
-def search_hoge() -> pd.DataFrame:
-    rec = engine.execute(SearchQueries.hoge)
-    rec_df = pd.DataFrame.from_records(rec)
-    return rec_df
+    @classmethod
+    def get_all_cood(cls) -> pd.DataFrame:
+        q = text(
+            f"SELECT longitude, latitude FROM place;"
+        )
+        logger.debug(q)
+        df = pd.read_sql_query(sql=q, con=engine)
+        return df
+
+    @classmethod
+    def time_within(cls, start_date: str, end_date: str) -> pd.DataFrame:
+        q = text(
+            f"SELECT * FROM place WHERE start_time >= '{start_date}' "
+            + f"AND start_time <= '{end_date}';"
+        )
+        logger.debug(q)
+        df = pd.read_sql_query(sql=q, con=engine)
+        logger.debug(df.head(5))
+        return df
 
 
 if __name__ == "__main__":
