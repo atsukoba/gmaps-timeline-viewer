@@ -2,10 +2,12 @@ import json
 import logging
 import os
 from datetime import datetime
-from typing import Dict, Literal, Optional, TypedDict
+from typing import Dict, Literal, Optional, Tuple, TypedDict
 
 # types
 
+TimeStamp = str
+Coordinate = Tuple[float, float]
 
 class Environment(TypedDict):
     APP_SERVER_PORT: int

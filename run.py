@@ -7,24 +7,36 @@ import pydeck as pdk
 import streamlit as st
 from dateutil.relativedelta import relativedelta  # to add days or years
 
+from db import Search
+from utils import TimeStamp, create_logger
+
+
+logger = create_logger("st")
+
 
 class StreamlitDemoApp:
 
     def __init__(self):
-        ...
+        cood_df = Search.get_all_cood()
 
-    def draw_map(self):
-        df = pd.DataFrame(
-            np.random.randn(1000, 2) / [50, 50] + [37.76, -122.4],
-            columns=["lat", "lon"])
+        # calc view point
+        Search.view_center = (cood_df.latitude.values.mean(),
+                              cood_df.longitude.values.mean())
+        logger.info(f"ViewPoint set: {Search.view_center}")
+
+    def draw_map(self, s: TimeStamp, e: TimeStamp) -> pd.DataFrame:
+
+        res_df = Search.time_within(s, e)
+        cood_df = res_df[["longitude", "latitude"]]
+        cood_df.columns = ["lon", "lat"]
 
         st.pydeck_chart(pdk.Deck(
             map_style="mapbox://styles/mapbox/light-v9",
             initial_view_state=pdk.ViewState(
-                latitude=37.76,
-                longitude=-122.4,
-                zoom=11,
-                pitch=50,
+                latitude=Search.view_center[0],
+                longitude=Search.view_center[1],
+                zoom=15,
+                pitch=25,
             ),
             layers=[
                 # pdk.Layer(
@@ -39,15 +51,17 @@ class StreamlitDemoApp:
                 # ),
                 pdk.Layer(
                     "ScatterplotLayer",
-                    data=df,
+                    data=cood_df,
                     get_position="[lon, lat]",
                     get_color="[200, 30, 0, 160]",
                     get_radius=200,
                 ),
             ],
             width="100%",
-            height=600,
+            height=800,
         ))
+
+        return res_df
 
     def run(self):
 
@@ -62,29 +76,29 @@ class StreamlitDemoApp:
             """
         )
 
-        self.draw_map()
-
         # Range selector
         format = "YYYY/MM/DD"  # format output
         # I need some range in the past
         cols_l, cols_r = st.columns((1, 1))  # To make it narrower
-        start_date = dt.date(year=2021, month=1, day=1) - \
-            relativedelta(years=2)
-        end_date = dt.datetime.now().date() - relativedelta(years=2)
+        start_date = dt.datetime.now().date() - relativedelta(years=8)
+        end_date = dt.datetime.now().date()
         max_days = end_date - start_date
 
-        s_start_date = cols_l.slider("Start date", min_value=start_date,
-                                     value=end_date,
-                                     max_value=end_date, format=format)
-        s_end_date = cols_r.slider("End date", min_value=start_date,
-                                   value=end_date,
-                                   max_value=end_date, format=format)
+        s_start_date: TimeStamp = cols_l.slider("Start date", min_value=start_date,
+                                                value=end_date,
+                                                max_value=end_date, format=format)
+        s_end_date: TimeStamp = cols_r.slider("End date", min_value=start_date,
+                                              value=end_date,
+                                              max_value=end_date, format=format)
+
+        res_df = self.draw_map(s_start_date, s_end_date)
 
         st.text("Curent Data")
         st.table(pd.DataFrame([[s_start_date, s_end_date]],
                               columns=["start",
                                        "end"],
                               index=["date"]))
+        st.table(res_df.head(20))
 
 
 if __name__ == "__main__":
