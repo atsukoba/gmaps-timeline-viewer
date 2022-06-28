@@ -1,5 +1,7 @@
 # Google Map Timeline Search Demo App
 
+<img width="1415" alt="image" src="https://user-images.githubusercontent.com/19545249/176161649-3745e95a-ba30-4844-b5d8-eaa359280dce.png">
+
 ## Setup
 
 1. Download your GoogleMaps timeline data (Takeout) from <https://timeline.google.com/maps/timeline>
