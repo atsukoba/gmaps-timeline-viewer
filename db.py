@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import json
 import os
 from enum import unique
@@ -16,7 +17,7 @@ from sqlalchemy.sql import text
 from sqlalchemy.sql.elements import TextClause
 from tqdm import tqdm
 
-from utils import create_logger, env, TimeStamp, Coordinate
+from utils import Coordinate, TimeStamp, create_logger, env
 
 logger = create_logger("db")
 
@@ -68,43 +69,93 @@ class Search:
 
 if __name__ == "__main__":
 
-    """ Create Database
-    [name, latitude, longitude, address, start_time, end_time]
-    """
 
+    events = []
     visitted_places = []
+    activities = []
+
+    """
+    - events
+        [id (PK), start_time, end_time]
+    - visitted_places
+        [event_id (FK), name, latitude, longitude, address]
+    - activities
+        [event_id (FK), activity_type, start_latitude, start_longitude, 
+        end_latitude, end_longitude, distance]
+    """
 
     data_files = [f for f in glob(
         "./Takeout/**/*.json", recursive=True) if "Records" not in f and "Settings" not in f]
 
-    for path in tqdm(data_files, desc="Loading history data"):
+    for f_idx, path in enumerate(tqdm(data_files, desc="Loading history data")):
         try:
             with open(path, "r") as f:
                 data = json.load(f)
         except:
             print(f"Failed to load json file: {path}")
             continue
-
-        for d in tqdm(data["timelineObjects"], desc="Extracting data", leave=False):
+        for d_idx, d in enumerate(tqdm(data["timelineObjects"], desc="Extracting data", leave=False)):
+            _id = hashlib.md5((str(f_idx) + "_" + str(d_idx)).encode()).hexdigest()
             if (p := d.get("placeVisit", None)) is not None:
                 try:
-                    visitted_places.append([
-                        p["location"].get("name", "No name"),
+                    events_el = [
+                        _id,
+                        p["duration"]["startTimestamp"],
+                        p["duration"]["endTimestamp"]
+                    ]
+                    visitted_place_el = [
+                        _id,
+                        p["location"].get("name", "no name"),
                         p["location"]["latitudeE7"] / 1e7,
                         p["location"]["longitudeE7"] / 1e7,
                         p["location"].get("address", "No Address"),
+                    ]
+                except KeyError as e:
+                    continue
+                events.append(events_el)
+                visitted_places.append(visitted_place_el)
+            if (p := d.get("activitySegment", None)) is not None:
+                try:
+                    events_el = [
+                        _id,
                         p["duration"]["startTimestamp"],
                         p["duration"]["endTimestamp"]
-                    ])
+                    ]
+                    activit_el = [
+                        _id,
+                        p["activityType"],
+                        p["startLocation"]["latitudeE7"] / 1e7,
+                        p["startLocation"]["longitudeE7"] / 1e7,
+                        p["endLocation"]["latitudeE7"] / 1e7,
+                        p["endLocation"]["longitudeE7"] / 1e7,
+                        p["distance"]
+                    ]
                 except KeyError as e:
-                    logger.debug(f"Keyerror, {e}")
-                    logger.debug(p)
                     continue
+                events.append(events_el)
+                activities.append(activit_el)
 
+    events = pd.DataFrame(
+        events,
+        columns=["id", "start_time", "end_time"]
+    )
+    activities = pd.DataFrame(
+        activities,
+        columns=["event_id",
+                 "activity_type",
+                 "start_latitude",
+                 "start_longitude",
+                 "end_latitude",
+                 "end_longitude",
+                 "distance"
+                 ])
     visitted_places = pd.DataFrame(
         visitted_places,
-        columns=["name", "latitude", "longitude", "address", "start_time", "end_time"])
-    visitted_places.head(10)
+        columns=["event_id", "name", "latitude", "longitude", "address"])
 
+    events.to_sql("event", con=engine,
+                  if_exists="append", index=False)
     visitted_places.to_sql("place", con=engine,
                            if_exists="append", index=False)
+    activities.to_sql("activity", con=engine,
+                      if_exists="append", index=False)

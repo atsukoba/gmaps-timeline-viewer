@@ -1,14 +1,30 @@
 DROP TABLE IF EXISTS place;
+DROP TABLE IF EXISTS activity;
+DROP TABLE IF EXISTS event;
 
-CREATE TABLE place (
-    name text,
-    latitude double precision NOT NULL,
-    longitude double precision NOT NULL,
-    address text,
+CREATE TABLE event (
+    id VARCHAR(32) PRIMARY KEY,
     start_time TIMESTAMPTZ NOT NULL,
     end_time TIMESTAMPTZ NOT NULL
 );
 
+CREATE TABLE place (
+    event_id VARCHAR(32) REFERENCES event(id),
+    name TEXT,
+    latitude double precision NOT NULL,
+    longitude double precision NOT NULL,
+    address TEXT
+);
+
+CREATE TABLE activity (
+    event_id VARCHAR(32) REFERENCES event(id),
+    activity_type TEXT,
+    start_latitude double precision NOT NULL,
+    start_longitude double precision NOT NULL,
+    end_latitude double precision NOT NULL,
+    end_longitude double precision NOT NULL,
+    distance BIGINT
+);
 -- Distance Calculation Function
 CREATE
 OR REPLACE FUNCTION distance(
