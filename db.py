@@ -56,10 +56,19 @@ class Search:
         return df
 
     @classmethod
-    def time_within(cls, start_date: str, end_date: str) -> pd.DataFrame:
+    def place_time_within(cls, start_date: str, end_date: str) -> pd.DataFrame:
         q = text(
-            f"SELECT * FROM place WHERE start_time >= '{start_date}' "
-            + f"AND start_time <= '{end_date}';"
+            f"SELECT P.* FROM place P INNER JOIN event E on E.id = P.event_id WHERE start_time >= '{start_date}' AND start_time <= '{end_date}';"
+        )
+        logger.debug(q)
+        df = pd.read_sql_query(sql=q, con=engine)
+        logger.debug(df.head(5))
+        return df
+    
+    @classmethod
+    def move_time_within(cls, start_date: str, end_date: str) -> pd.DataFrame:
+        q = text(
+            f"SELECT A.* FROM activity A INNER JOIN event E on E.id = A.event_id WHERE start_time >= '{start_date}' AND start_time <= '{end_date}';"
         )
         logger.debug(q)
         df = pd.read_sql_query(sql=q, con=engine)

@@ -24,9 +24,11 @@ class StreamlitDemoApp:
                               cood_df.longitude.values.mean())
         logger.info(f"ViewPoint set: {Search.view_center}")
 
-    def draw_map(self, s: TimeStamp, e: TimeStamp) -> pd.DataFrame:
+        self.mode = "stay"
 
-        res_df = Search.time_within(s, e)
+    def draw_place(self, s: TimeStamp, e: TimeStamp) -> pd.DataFrame:
+
+        res_df = Search.place_time_within(s, e)
         cood_df = res_df[["longitude", "latitude"]]
         cood_df.columns = ["lon", "lat"]
 
@@ -35,20 +37,10 @@ class StreamlitDemoApp:
             initial_view_state=pdk.ViewState(
                 latitude=Search.view_center[0],
                 longitude=Search.view_center[1],
-                zoom=15,
+                zoom=5,
                 pitch=25,
             ),
             layers=[
-                # pdk.Layer(
-                #     "HexagonLayer",
-                #     data=df,
-                #     get_position="[lon, lat]",
-                #     radius=200,
-                #     elevation_scale=4,
-                #     elevation_range=[0, 1000],
-                #     pickable=True,
-                #     extruded=True,
-                # ),
                 pdk.Layer(
                     "ScatterplotLayer",
                     data=cood_df,
@@ -56,6 +48,41 @@ class StreamlitDemoApp:
                     get_color="[200, 30, 0, 160]",
                     get_radius=200,
                 ),
+            ],
+            width="100%",
+            height=800,
+        ))
+
+        return res_df
+
+    def draw_move(self, s: TimeStamp, e: TimeStamp) -> pd.DataFrame:
+
+        res_df = Search.move_time_within(s, e)
+        cood_df = res_df[["start_longitude", "start_latitude",
+                          "end_longitude", "end_latitude"]]
+        cood_df.columns = ["slon", "slat", "elon", "elat"]
+
+        st.pydeck_chart(pdk.Deck(
+            map_style="mapbox://styles/mapbox/light-v9",
+            initial_view_state=pdk.ViewState(
+                latitude=Search.view_center[0],
+                longitude=Search.view_center[1],
+                zoom=5,
+                pitch=25,
+            ),
+            layers=[
+                pdk.Layer(
+                    "LineLayer",
+                    data=cood_df,
+                    get_source_position="[slon, slat]",
+                    get_target_position="[elon, elat]",
+                    get_color="[200, 30, 0, 160]",
+                    get_width=1,
+                    highlight_color=[255, 255, 0],
+                    picking_radius=10,
+                    auto_highlight=True,
+                    pickable=True,
+                )
             ],
             width="100%",
             height=800,
@@ -91,7 +118,14 @@ class StreamlitDemoApp:
                                               value=end_date,
                                               max_value=end_date, format=format)
 
-        res_df = self.draw_map(s_start_date, s_end_date)
+        self.mode = st.selectbox(
+            "Select Viewer Mode",
+            ("stay", "move"))
+
+        if self.mode == "stay":
+            res_df = self.draw_place(s_start_date, s_end_date)
+        else:
+            res_df = self.draw_move(s_start_date, s_end_date)
 
         st.text("Curent Data")
         st.table(pd.DataFrame([[s_start_date, s_end_date]],
