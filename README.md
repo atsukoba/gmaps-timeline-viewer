@@ -1,6 +1,6 @@
 # Google Map Timeline Search Demo App
 
-<img width="1415" alt="image" src="https://user-images.githubusercontent.com/19545249/176161649-3745e95a-ba30-4844-b5d8-eaa359280dce.png">
+<img width="1077" alt="image" src="https://user-images.githubusercontent.com/19545249/178161442-bd40282f-9b4c-4ec6-a94a-be02bf1110e5.png">
 
 ## Setup
 
