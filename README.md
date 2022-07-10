@@ -70,7 +70,6 @@ Type "help" for help.
 gmap_demo_app=#  \conninfo
 ```
 
-
 and run Streamlit server
 
 ```shell
@@ -79,4 +78,4 @@ streamlit run run.py
 
 ## Notes
 
-- this demo app is assignment on MMKB class at Keio University SFC grad school of media and governance
+- this demo app is developeed as a assignment on MMKB class at Keio Univ. grad school of media and governance.
