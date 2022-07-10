@@ -64,7 +64,7 @@ class Search:
         df = pd.read_sql_query(sql=q, con=engine)
         logger.debug(df.head(5))
         return df
-    
+
     @classmethod
     def move_time_within(cls, start_date: str, end_date: str) -> pd.DataFrame:
         q = text(
@@ -75,9 +75,18 @@ class Search:
         logger.debug(df.head(5))
         return df
 
+    @classmethod
+    def move_time_distance_within(cls, start_date: str, end_date: str, distance: float) -> pd.DataFrame:
+        q = text(
+            f"SELECT A.* FROM activity A INNER JOIN event E on E.id = A.event_id WHERE start_time >= '{start_date}' AND start_time <= '{end_date}' AND distance(A.start_latitude, A.start_longitude, A.end_latitude, A.end_longitude) <= {distance};"
+        )
+        logger.debug(q)
+        df = pd.read_sql_query(sql=q, con=engine)
+        logger.debug(df.head(5))
+        return df
+
 
 if __name__ == "__main__":
-
 
     events = []
     visitted_places = []
@@ -104,7 +113,8 @@ if __name__ == "__main__":
             print(f"Failed to load json file: {path}")
             continue
         for d_idx, d in enumerate(tqdm(data["timelineObjects"], desc="Extracting data", leave=False)):
-            _id = hashlib.md5((str(f_idx) + "_" + str(d_idx)).encode()).hexdigest()
+            _id = hashlib.md5(
+                (str(f_idx) + "_" + str(d_idx)).encode()).hexdigest()
             if (p := d.get("placeVisit", None)) is not None:
                 try:
                     events_el = [
