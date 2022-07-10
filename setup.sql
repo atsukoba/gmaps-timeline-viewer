@@ -35,11 +35,11 @@ OR REPLACE FUNCTION distance(
 ) RETURNS double precision AS $BODY$ DECLARE R integer = 6371e3;
 -- Meters
 rad double precision = 0.01745329252;
-φ1 double precision = lat1 * rad;
-φ2 double precision = lat2 * rad;
-Δφ double precision = (lat2 - lat1) * rad;
-Δλ double precision = (lon2 - lon1) * rad;
-a double precision = sin(Δφ / 2) * sin(Δφ / 2) + cos(φ1) * cos(φ2) * sin(Δλ / 2) * sin(Δλ / 2);
+lat1_r double precision = lat1 * rad;
+lat2_r double precision = lat2 * rad;
+lat_d_r double precision = (lat2 - lat1) * rad;
+lon_d_r double precision = (lon2 - lon1) * rad;
+a double precision = sin(lat_d_r / 2) * sin(lat_d_r / 2) + cos(lat1_r) * cos(lat2_r) * sin(lon_d_r / 2) * sin(lon_d_r / 2);
 c double precision = 2 * atan2(sqrt(a), sqrt(1 - a));
 BEGIN RETURN R * c;
 
